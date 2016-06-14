@@ -32,13 +32,22 @@ class PythonUDFs():
         resp.body = ('Unsupported operation: GET')
 
     def on_post(self, req, resp):
-        print self.secret
-
         try:
+            if not req.client_accepts_json:
+                raise falcon.HTTPBadRequest('Client does accept JSON',
+                    'A valid Accept header is required.')
+            elif not req.content_type == "application/json":
+                raise falcon.HTTPBadRequest('Contents are not in JSON',
+                    'A valid Content-Type header is required.')
+            elif not req.get_header("Secret") == self.secret:
+                raise falcon.HTTPBadRequest('Secret does not match',
+                    'The correct secret should be present in the header.')
+
+
             body = req.stream.read()
             if not body:
                 raise falcon.HTTPBadRequest('Empty request body',
-                                            'A valid JSON document is required.')
+                    'A valid JSON document is required.')
 
             udf = json.loads(body, encoding='utf-8')
             resp.status = falcon.HTTP_200  # This is the default status
